@@ -3,6 +3,7 @@
  */
 
 #include "strap.h"
+#include "memlayout.h"
 #include "pmm.h"
 #include "process.h"
 #include "riscv.h"
@@ -58,6 +59,11 @@ void handle_user_page_fault(uint64 mcause, uint64 sepc, uint64 stval) {
         // dynamically increase application stack.
         // hint: first allocate a new physical page, and then, maps the new page
         // to the virtual address that causes the page fault.
+        if (stval >= USER_STACK_TOP ||
+            stval <= (USER_STACK_TOP - 20 * STACK_SIZE)) {
+            panic("this address is not available!");
+            break;
+        }
         pag = alloc_page();
         user_vm_map(current->pagetable, stval / (PGSIZE) * (PGSIZE), PGSIZE,
                     (uint64)(pag), prot_to_type(PROT_WRITE | PROT_READ, 1));
